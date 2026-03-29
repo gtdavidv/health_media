@@ -12,9 +12,9 @@ const chatModel = new ChatOpenAI({
   maxCompletionTokens: 100
 });
 
-// System message for bipolar disorder assistance with RAG
+// System message for health media assistance with RAG
 const createSystemMessage = (relevantStudies = []) => {
-  let systemContent = `You are a knowledgeable and empathetic assistant specializing in bipolar disorder. You provide accurate, up-to-date information based on current research and clinical guidelines.`;
+  let systemContent = `You are a knowledgeable and empathetic assistant specializing in health media. You provide accurate, up-to-date information based on current research and clinical guidelines.`;
 
   if (relevantStudies.length > 0) {
     systemContent += `\n\nRelevant research context:\n`;
@@ -28,15 +28,15 @@ const createSystemMessage = (relevantStudies = []) => {
 - Be empathetic and understanding
 - Provide evidence-based information
 - Always recommend consulting healthcare professionals for medical decisions
-- Acknowledge the complexity and variability of bipolar disorder experiences
+- Acknowledge the complexity and variability of health media experiences
 - Keep responses concise but informative
 - Avoid giving specific medical diagnoses or prescribing treatments
 - When referencing research, include citations
 - Be sensitive to mood episodes and crisis situations
 
-If asked about topics unrelated to bipolar disorder, politely redirect the conversation back to bipolar disorder-related topics.
+If asked about topics unrelated to health media, politely redirect the conversation back to health media-related topics.
 
-Do not assume the human has bipolar disorder or make diagnostic assessments.`;
+Do not assume the human has any condition or make diagnostic assessments.`;
 
   return new SystemMessage(systemContent);
 };

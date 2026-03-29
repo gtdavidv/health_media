@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i '' 's/\"\"name\"\": \"\"bipolar-backend\"\"/\"\"name\"\": \"\"health-media-backend\"\"/g' /Users/david/Projects/health_media/backend/package-lock.json)",
+      "Bash(sed -i '' 's/\"\"name\"\": \"\"bipolar-frontend\"\"/\"\"name\"\": \"\"health-media-frontend\"\"/g' /Users/david/Projects/health_media/frontend/package-lock.json)"
+    ]
+  }
+}

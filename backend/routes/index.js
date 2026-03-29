@@ -14,7 +14,7 @@ router.use('/articles', articlesRoutes);
 // Basic API info endpoint
 router.get('/', (req, res) => {
   res.json({
-    name: 'Bipolar Disorder API',
+    name: 'Health Media API',
     version: '1.0.0',
     endpoints: {
       health: '/health',

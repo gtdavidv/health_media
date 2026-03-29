@@ -5,7 +5,7 @@ terraform {
 provider "aws" { region = "us-east-1" }
 
 # --- Vars (override with -var if you want) ---
-variable "name"       { default = "bipolar" }
+variable "name"       { default = "health-media" }
 variable "cidr"       { default = "10.0.0.0/16" }
 variable "azs"        {
   type = list(string)
@@ -107,11 +107,11 @@ output "ecs_tasks_sg_id"    { value = aws_security_group.ecs_tasks.id }
 
 # --- ECR ---
 resource "aws_ecr_repository" "app" {
-  name = "bipolar-app"
+  name = "health-media-app"
   image_tag_mutability = "MUTABLE"
   image_scanning_configuration { scan_on_push = true }
   encryption_configuration { encryption_type = "AES256" }
-  tags = { Name = "bipolar-app" }
+  tags = { Name = "health-media-app" }
 }
 
 resource "aws_ecr_lifecycle_policy" "app" {
@@ -127,13 +127,13 @@ resource "aws_ecr_lifecycle_policy" "app" {
 
 # --- CloudWatch logs ---
 resource "aws_cloudwatch_log_group" "api" {
-  name              = "/ecs/bipolar-api"
+  name              = "/ecs/health-media-api"
   retention_in_days = 14
 }
 
 # --- ECS cluster ---
 resource "aws_ecs_cluster" "this" {
-  name = "bipolar-cluster"
+  name = "health-media-cluster"
   setting {
     name = "containerInsights"
     value = "enabled"
@@ -152,7 +152,7 @@ data "aws_iam_policy_document" "task_exec_assume" {
   }
 }
 resource "aws_iam_role" "task_execution" {
-  name = "bipolar-task-exec"
+  name = "health-media-task-exec"
   assume_role_policy = data.aws_iam_policy_document.task_exec_assume.json
 }
 resource "aws_iam_role_policy_attachment" "task_exec_attach1" {
@@ -160,8 +160,8 @@ resource "aws_iam_role_policy_attachment" "task_exec_attach1" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-data "aws_secretsmanager_secret" "openai" { name = "bipolar_openai_key" }
-data "aws_secretsmanager_secret" "admin" { name = "bipolar_admin_password" }
+data "aws_secretsmanager_secret" "openai" { name = "health_media_openai_key" }
+data "aws_secretsmanager_secret" "admin" { name = "health_media_admin_password" }
 
 data "aws_iam_policy_document" "exec_sm_read" {
   statement {
@@ -173,7 +173,7 @@ data "aws_iam_policy_document" "exec_sm_read" {
   }
 }
 resource "aws_iam_policy" "exec_sm_read" {
-  name   = "bipolar-exec-sm-read"
+  name   = "health-media-exec-sm-read"
   policy = data.aws_iam_policy_document.exec_sm_read.json
 }
 resource "aws_iam_role_policy_attachment" "exec_sm_attach" {
@@ -183,11 +183,11 @@ resource "aws_iam_role_policy_attachment" "exec_sm_attach" {
 
 # Task role (app permissions) – DynamoDB access (tighten later)
 resource "aws_iam_role" "task_role" {
-  name = "bipolar-task-role"
+  name = "health-media-task-role"
   assume_role_policy = data.aws_iam_policy_document.task_exec_assume.json
 }
 resource "aws_iam_policy" "dynamo_access" {
-  name = "bipolar-dynamo-access"
+  name = "health-media-dynamo-access"
   policy = jsonencode({
     Version="2012-10-17",
     Statement=[{
@@ -204,13 +204,13 @@ resource "aws_iam_role_policy_attachment" "task_dynamo_attach" {
 
 # --- ALB (HTTP for now) ---
 resource "aws_lb" "app" {
-  name               = "bipolar-alb"
+  name               = "health-media-alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = [for s in aws_subnet.public : s.id]
 }
 resource "aws_lb_target_group" "api" {
-  name     = "bipolar-tg"
+  name     = "health-media-tg"
   port     = 8000
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
@@ -241,7 +241,7 @@ locals {
   mem  = 1024 # 1 GB
 }
 resource "aws_ecs_task_definition" "api" {
-  family                   = "bipolar-api"
+  family                   = "health-media-api"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu    = local.cpu
@@ -263,8 +263,8 @@ resource "aws_ecs_task_definition" "api" {
     essential   = true
     environment = []
     secrets     = [
-      {name = "OPENAI_KEY", valueFrom = "${data.aws_secretsmanager_secret.openai.arn}:bipolar_openai_key::"},
-      {name = "ADMIN_PASSWORD", valueFrom = "${data.aws_secretsmanager_secret.admin.arn}:bipolar_admin_password::"}
+      {name = "OPENAI_KEY", valueFrom = "${data.aws_secretsmanager_secret.openai.arn}:health_media_openai_key::"},
+      {name = "ADMIN_PASSWORD", valueFrom = "${data.aws_secretsmanager_secret.admin.arn}:health_media_admin_password::"}
     ]
   }])
   runtime_platform {
@@ -275,7 +275,7 @@ resource "aws_ecs_task_definition" "api" {
 
 # --- ECS Service (Fargate) ---
 resource "aws_ecs_service" "api" {
-  name            = "bipolar-api-svc"
+  name            = "health-media-api-svc"
   cluster         = aws_ecs_cluster.this.id
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = 1
@@ -308,7 +308,7 @@ resource "aws_appautoscaling_target" "svc" {
   service_namespace  = "ecs"
 }
 resource "aws_appautoscaling_policy" "cpu" {
-  name               = "bipolar-cpu-scaling"
+  name               = "health-media-cpu-scaling"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.svc.resource_id
   scalable_dimension = aws_appautoscaling_target.svc.scalable_dimension
@@ -337,7 +337,7 @@ variable "fe_bucket_name" {
 resource "random_id" "suffix" { byte_length = 4 }
 
 locals {
-  fe_bucket_name = coalesce(var.fe_bucket_name, "bipolar-frontend-${random_id.suffix.hex}")
+  fe_bucket_name = coalesce(var.fe_bucket_name, "health-media-frontend-${random_id.suffix.hex}")
 }
 
 resource "aws_s3_bucket" "fe" { bucket = var.fe_bucket_name }
@@ -359,7 +359,7 @@ resource "aws_s3_bucket_versioning" "fe" {
 
 # ---- CloudFront with OAC (no custom domain) ----
 resource "aws_cloudfront_origin_access_control" "oac" {
-  name                              = "bipolar-fe-oac"
+  name                              = "health-media-fe-oac"
   description                       = "OAC for S3 origin"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -370,7 +370,7 @@ data "aws_s3_bucket" "fe" { bucket = aws_s3_bucket.fe.bucket }
 
 resource "aws_cloudfront_distribution" "fe" {
   enabled = true
-  comment = "bipolar React app"
+  comment = "health-media React app"
 
   origin {
     domain_name              = data.aws_s3_bucket.fe.bucket_regional_domain_name
@@ -387,7 +387,7 @@ resource "aws_cloudfront_distribution" "fe" {
   }
   
   origin {
-    domain_name = "bipolar-alb-700384359.us-east-1.elb.amazonaws.com"
+    domain_name = aws_lb.app.dns_name
     origin_id   = "alb-backend"
     custom_origin_config {
       origin_protocol_policy = "http-only" # ALB accepts HTTP from CF

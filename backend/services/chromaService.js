@@ -13,7 +13,7 @@ class ChromaService {
       }));
     
     this.collection = null;
-    this.collectionName = 'bipolar_studies';
+    this.collectionName = 'health_media_studies';
   }
 
   async initialize() {

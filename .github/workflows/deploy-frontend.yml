@@ -14,9 +14,6 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      FE_BUCKET: terraform-20250907201205156800000001
-      CF_DIST_ID: E1NXDXKR1Q01XI
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +22,14 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::983774590472:role/github-ecr
           aws-region: us-east-1
+
+      - name: Fetch Terraform outputs
+        id: tf
+        working-directory: terraform
+        run: |
+          terraform init -input=false
+          echo "bucket=$(terraform output -raw frontend_bucket)" >> "$GITHUB_OUTPUT"
+          echo "dist_id=$(terraform output -raw frontend_distribution)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -48,8 +53,8 @@ jobs:
           echo "No build dir found"; exit 1
       
       - name: Sync to S3
-        run: aws s3 sync "${{ steps.path.outputs.dir }}" "s3://${FE_BUCKET}" --delete
+        run: aws s3 sync "${{ steps.path.outputs.dir }}" "s3://${{ steps.tf.outputs.bucket }}" --delete
 
       - name: Invalidate CloudFront
         run: |
-          aws cloudfront create-invalidation --distribution-id "$CF_DIST_ID" --paths "/*"
+          aws cloudfront create-invalidation --distribution-id "${{ steps.tf.outputs.dist_id }}" --paths "/*"

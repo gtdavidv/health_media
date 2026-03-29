@@ -1,7 +1,7 @@
 {
-  "name": "bipolar-backend",
+  "name": "health-media-backend",
   "version": "1.0.0",
-  "description": "Bipolar disorder backend API server",
+  "description": "Health media backend API server",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -30,7 +30,7 @@
     "node": ">=18.0.0"
   },
   "keywords": [
-    "bipolar",
+    "health-media",
     "api",
     "express",
     "backend"

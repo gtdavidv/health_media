@@ -1,7 +1,7 @@
 {
-  "name": "bipolar-frontend",
+  "name": "health-media-frontend",
   "version": "1.0.0",
-  "description": "Bipolar disorder React frontend",
+  "description": "Health media React frontend",
   "private": true,
   "proxy": "http://localhost:8000",
   "scripts": {

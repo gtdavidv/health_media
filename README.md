@@ -1,11 +1,11 @@
-# Bipolar Disorder Chat Application
+# Health Media Chat Application
 
-A full-stack chat application for bipolar disorder information and support, powered by GPT-5 via LangChain.
+A full-stack chat application for health media information and support, powered by GPT-5 via LangChain.
 
 ## Project Structure
 
 ```
-bipolar/
+health_media/
 ├── backend/          # Node.js/Express API server
 ├── frontend/         # React frontend application  
 ├── .gitignore        # Git ignore rules
@@ -107,7 +107,7 @@ The frontend will run on `http://localhost:3000`
 
 - `GET /health` - Health check
 - `GET /api` - API information
-- `POST /api/chat` - Chat with bipolar disorder assistant
+- `POST /api/chat` - Chat with health media assistant
 
 ## Features
 

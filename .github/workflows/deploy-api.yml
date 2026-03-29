@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: us-east-1
-      CLUSTER: bipolar-cluster
-      SERVICE: bipolar-api-svc
-      TASK_FAMILY: bipolar-api
+      CLUSTER: health-media-cluster
+      SERVICE: health-media-api-svc
+      TASK_FAMILY: health-media-api
       CONTAINER_NAME: api
-      ECR_REPO: bipolar-app
+      ECR_REPO: health-media-app
     steps:
       - uses: actions/checkout@v4
 

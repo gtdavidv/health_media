@@ -44,16 +44,16 @@ const ArticlesList = () => {
   return (
     <div className="articles-list-container">
       <header className="articles-header">
-        <h1>Bipolar Disorder Articles</h1>
+        <h1>Health Media Articles</h1>
         <p className="articles-subtitle">
-          Educational resources and information about bipolar disorder
+          Educational resources and information about health media
         </p>
       </header>
 
       {articles.length === 0 ? (
         <div className="no-articles">
           <h2>No Articles Available</h2>
-          <p>Check back later for new content about bipolar disorder.</p>
+          <p>Check back later for new content about health media.</p>
         </div>
       ) : (
         <div className="articles-grid">

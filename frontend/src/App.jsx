@@ -26,7 +26,7 @@ function ChatPage() {
   return (
     <>
       <header className="App-header">
-        <h1>Bipolar Disorder Chat</h1>
+        <h1>Health Media Chat</h1>
         <nav className="main-nav">
           <Link to="/articles" className="nav-link">
             📚 Browse Articles
