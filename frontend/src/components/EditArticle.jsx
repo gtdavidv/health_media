@@ -1,0 +1,132 @@
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import axios from 'axios'
+import AdminAuth from './AdminAuth'
+import RichTextEditor from './RichTextEditor'
+import '../styles/AddArticle.css'
+
+const EditArticle = () => {
+  const { slug } = useParams()
+  const navigate = useNavigate()
+  const [article, setArticle] = useState({ title: '', summary: '', content: '' })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        const response = await axios.get(`/api/articles/${slug}`)
+        setArticle({ title: response.data.title, summary: response.data.summary || '', content: response.data.content })
+      } catch (error) {
+        setMessage('Failed to load article')
+      } finally {
+        setLoading(false)
+      }
+    }
+    if (slug) fetchArticle()
+  }, [slug])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+
+    try {
+      const { title, summary, content } = article
+
+      if (!title.trim() || !content.trim()) {
+        setMessage('Title and content are required')
+        return
+      }
+
+      await axios.put(`/api/admin/articles/${slug}`, { title, summary, content })
+
+      setMessage('Article updated successfully!')
+      setTimeout(() => navigate('/admin/manage'), 1500)
+    } catch (error) {
+      if (error.response?.status === 401) {
+        window.location.reload()
+        return
+      }
+      setMessage(error.response?.data?.error || 'Error updating article')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <AdminAuth title="Edit Article">
+      {({ logout }) => (
+        <div className="add-article-container">
+          <header className="add-article-header">
+            <div className="header-content">
+              <h1>Edit Article</h1>
+              <div className="header-actions">
+                <Link to="/admin/manage" className="nav-btn">Manage Articles</Link>
+                <Link to="/" className="nav-btn">Back to Chat</Link>
+                <button onClick={logout} className="logout-btn">Logout</button>
+              </div>
+            </div>
+          </header>
+
+          {message && (
+            <div className={`message ${message.includes('Error') || message.includes('error') || message.includes('Failed') ? 'error' : 'success'}`}>
+              {message}
+            </div>
+          )}
+
+          <main className="add-article-main">
+            {loading ? (
+              <div className="loading">Loading article...</div>
+            ) : (
+              <form onSubmit={handleSubmit} className="article-form">
+                <div className="form-group">
+                  <label htmlFor="title">Article Title</label>
+                  <input
+                    type="text"
+                    id="title"
+                    value={article.title}
+                    onChange={(e) => setArticle(prev => ({ ...prev, title: e.target.value }))}
+                    required
+                    className="title-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="summary">Summary <span className="field-optional">(optional)</span></label>
+                  <textarea
+                    id="summary"
+                    value={article.summary}
+                    onChange={(e) => setArticle(prev => ({ ...prev, summary: e.target.value }))}
+                    placeholder="A short description shown on the articles list. If left blank, an excerpt from the article will be used."
+                    rows="3"
+                    className="summary-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Article Content</label>
+                  <RichTextEditor
+                    content={article.content}
+                    onChange={(html) => setArticle(prev => ({ ...prev, content: html }))}
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" disabled={saving} className="submit-btn">
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button type="button" onClick={() => navigate('/admin/manage')} className="clear-btn" disabled={saving}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </main>
+        </div>
+      )}
+    </AdminAuth>
+  )
+}
+
+export default EditArticle

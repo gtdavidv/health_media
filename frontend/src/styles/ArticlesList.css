@@ -1,77 +1,139 @@
+/* Mobile-first */
+
+/* ─── Page container ────────────────────────────────────────────────────────── */
+
 .articles-list-container {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  /* 16 px horizontal gutter on mobile */
+  padding: 24px 16px 48px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
+/* ─── Page header ───────────────────────────────────────────────────────────── */
+
+/* ─── Search ────────────────────────────────────────────────────────────────── */
+
+.articles-search {
+  margin-bottom: 28px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+.clear-search {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.clear-search:hover { background: #f3f4f6; }
+
+/* ─── Article preview text ──────────────────────────────────────────────────── */
+
+.article-preview-text {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.55;
+  margin: 6px 0 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── Page header ───────────────────────────────────────────────────────────── */
+
 .articles-header {
   text-align: center;
-  margin-bottom: 50px;
-  padding-bottom: 30px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
   border-bottom: 2px solid #e9ecef;
 }
 
 .articles-header h1 {
-  font-size: 2.5rem;
+  /* Mobile: slightly smaller heading */
+  font-size: 1.75rem;
   color: #333;
-  margin-bottom: 15px;
+  margin: 0 0 10px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .articles-subtitle {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: #666;
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.5;
 }
 
+/* ─── State messages ────────────────────────────────────────────────────────── */
+
 .loading {
   text-align: center;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #666;
-  padding: 60px 20px;
+  padding: 48px 16px;
 }
 
 .error-message {
   background-color: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
-  padding: 20px;
+  padding: 16px;
   border-radius: 8px;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .no-articles {
   text-align: center;
-  padding: 60px 20px;
+  padding: 48px 16px;
   color: #666;
 }
 
 .no-articles h2 {
-  font-size: 1.8rem;
-  margin-bottom: 15px;
+  font-size: 1.5rem;
+  margin-bottom: 12px;
   color: #333;
 }
 
 .no-articles p {
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
+/* ─── Articles grid ─────────────────────────────────────────────────────────── */
+
+/* Mobile-first: single column */
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 30px;
-  margin-bottom: 50px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 40px;
 }
 
-@media (max-width: 768px) {
-  .articles-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* ─── Article card ──────────────────────────────────────────────────────────── */
 
 .article-card-link {
   text-decoration: none;
@@ -84,35 +146,43 @@
   background-color: #ffffff;
   border: 1px solid #dee2e6;
   border-radius: 12px;
-  padding: 30px;
+  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
 }
 
 .article-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.13);
   border-color: #007bff;
 }
 
+/* Prevent transform from firing on touch devices mid-scroll */
+@media (hover: none) {
+  .article-card:hover {
+    transform: none;
+  }
+}
+
 .article-title {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 15px;
+  margin: 0 0 12px;
   line-height: 1.3;
   flex-grow: 1;
 }
 
 .article-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  font-size: 0.9rem;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
   color: #666;
 }
 
@@ -125,25 +195,28 @@
   color: white;
   padding: 2px 8px;
   border-radius: 12px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .article-preview {
   color: #007bff;
   font-weight: 500;
   margin-top: auto;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .article-card:hover .article-preview {
   color: #0056b3;
 }
 
+/* ─── Back to chat ──────────────────────────────────────────────────────────── */
+
 .back-to-chat {
   text-align: center;
-  margin-top: 40px;
-  padding-top: 30px;
+  margin-top: 32px;
+  padding-top: 24px;
   border-top: 1px solid #e9ecef;
 }
 
@@ -152,16 +225,94 @@
   align-items: center;
   color: #007bff;
   text-decoration: none;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 500;
   padding: 12px 24px;
   border: 2px solid #007bff;
   border-radius: 8px;
-  transition: all 0.3s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  /* Minimum tap target */
+  min-height: 44px;
 }
 
 .back-link:hover {
   background-color: #007bff;
   color: white;
-  transform: translateY(-1px);
+}
+
+/* ─── Tablet — 2 columns (640 px) ───────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .articles-list-container {
+    padding: 32px 24px 56px;
+  }
+
+  .articles-header {
+    margin-bottom: 40px;
+    padding-bottom: 28px;
+  }
+
+  .articles-header h1 {
+    font-size: 2rem;
+  }
+
+  .articles-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .articles-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+  }
+
+  .article-card {
+    padding: 24px;
+  }
+
+  .article-title {
+    font-size: 1.3rem;
+  }
+}
+
+/* ─── Desktop — 3 columns (1024 px) ────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .articles-list-container {
+    padding: 40px 24px 64px;
+  }
+
+  .articles-header {
+    margin-bottom: 50px;
+    padding-bottom: 30px;
+  }
+
+  .articles-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+  }
+
+  .articles-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    margin-bottom: 50px;
+  }
+
+  .article-card {
+    padding: 28px;
+  }
+
+  .article-title {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+  }
+
+  .article-meta {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .back-to-chat {
+    margin-top: 40px;
+    padding-top: 30px;
+  }
 }

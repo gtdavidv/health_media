@@ -1,6 +1,9 @@
 terraform {
   required_version = ">= 1.6.0"
-  required_providers { aws = { source = "hashicorp/aws", version = "~> 5.0" } }
+  required_providers {
+    aws    = { source = "hashicorp/aws",    version = "~> 5.0" }
+    random = { source = "hashicorp/random", version = "~> 3.0" }
+  }
 }
 provider "aws" { region = "us-east-1" }
 
@@ -160,15 +163,18 @@ resource "aws_iam_role_policy_attachment" "task_exec_attach1" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-data "aws_secretsmanager_secret" "openai" { name = "health_media_openai_key" }
-data "aws_secretsmanager_secret" "admin" { name = "health_media_admin_password" }
+data "aws_secretsmanager_secret" "openai"  { name = "health_media_openai_key" }
+data "aws_secretsmanager_secret" "admin"   { name = "health_media_admin_password" }
+data "aws_secretsmanager_secret" "session" { name = "health_media_session_secret" }
 
 data "aws_iam_policy_document" "exec_sm_read" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = [
       data.aws_secretsmanager_secret.openai.arn,
-      data.aws_secretsmanager_secret.admin.arn
+      data.aws_secretsmanager_secret.admin.arn,
+      data.aws_secretsmanager_secret.session.arn,
+      aws_secretsmanager_secret.db_url.arn
     ]
   }
 }
@@ -181,25 +187,83 @@ resource "aws_iam_role_policy_attachment" "exec_sm_attach" {
   policy_arn = aws_iam_policy.exec_sm_read.arn
 }
 
-# Task role (app permissions) – DynamoDB access (tighten later)
+# Task role (app permissions)
 resource "aws_iam_role" "task_role" {
   name = "health-media-task-role"
   assume_role_policy = data.aws_iam_policy_document.task_exec_assume.json
 }
-resource "aws_iam_policy" "dynamo_access" {
-  name = "health-media-dynamo-access"
-  policy = jsonencode({
-    Version="2012-10-17",
-    Statement=[{
-      Effect="Allow",
-      Action=["dynamodb:*"],
-      Resource="*"
-    }]
-  })
+
+data "aws_iam_policy_document" "task_role_media" {
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.media.arn}/images/*"]
+  }
 }
-resource "aws_iam_role_policy_attachment" "task_dynamo_attach" {
-  role = aws_iam_role.task_role.name
-  policy_arn = aws_iam_policy.dynamo_access.arn
+
+resource "aws_iam_policy" "task_role_media" {
+  name   = "health-media-task-media-upload"
+  policy = data.aws_iam_policy_document.task_role_media.json
+}
+
+resource "aws_iam_role_policy_attachment" "task_role_media" {
+  role       = aws_iam_role.task_role.name
+  policy_arn = aws_iam_policy.task_role_media.arn
+}
+
+# --- RDS PostgreSQL ---
+resource "aws_db_subnet_group" "main" {
+  name       = "${var.name}-db-subnet-group"
+  subnet_ids = [for s in aws_subnet.public : s.id]
+  tags       = { Name = "${var.name}-db-subnet-group" }
+}
+
+resource "aws_security_group" "rds" {
+  name   = "${var.name}-rds-sg"
+  vpc_id = aws_vpc.main.id
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_tasks.id]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = { Name = "${var.name}-rds-sg" }
+}
+
+resource "random_password" "db" {
+  length  = 32
+  special = false
+}
+
+resource "aws_db_instance" "main" {
+  identifier             = "${var.name}-db"
+  engine                 = "postgres"
+  engine_version         = "16"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  storage_type           = "gp2"
+  db_name                = "health_media"
+  username               = "postgres"
+  password               = random_password.db.result
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  publicly_accessible    = false
+  skip_final_snapshot    = true
+  tags                   = { Name = "${var.name}-db" }
+}
+
+resource "aws_secretsmanager_secret" "db_url" {
+  name = "health_media_database_url"
+}
+
+resource "aws_secretsmanager_secret_version" "db_url" {
+  secret_id     = aws_secretsmanager_secret.db_url.id
+  secret_string = "postgresql://postgres:${random_password.db.result}@${aws_db_instance.main.endpoint}/health_media"
 }
 
 # --- ALB (HTTP for now) ---
@@ -261,10 +325,15 @@ resource "aws_ecs_task_definition" "api" {
       }
     }
     essential   = true
-    environment = []
+    environment = [
+      {name = "MEDIA_CDN_DOMAIN", value = aws_cloudfront_distribution.media.domain_name}
+    ]
     secrets     = [
-      {name = "OPENAI_KEY", valueFrom = "${data.aws_secretsmanager_secret.openai.arn}:health_media_openai_key::"},
-      {name = "ADMIN_PASSWORD", valueFrom = "${data.aws_secretsmanager_secret.admin.arn}:health_media_admin_password::"}
+      {name = "OPENAI_KEY",     valueFrom = "${data.aws_secretsmanager_secret.openai.arn}:health_media_openai_key::"},
+      {name = "ADMIN_PASSWORD",  valueFrom = "${data.aws_secretsmanager_secret.admin.arn}:health_media_admin_password::"},
+      {name = "SESSION_SECRET",  valueFrom = "${data.aws_secretsmanager_secret.session.arn}:health_media_session_secret::"},
+      {name = "DATABASE_URL",    valueFrom = aws_secretsmanager_secret.db_url.arn},
+      {name = "MEDIA_BUCKET",    valueFrom = aws_s3_bucket.media.bucket}
     ]
   }])
   runtime_platform {
@@ -324,8 +393,9 @@ resource "aws_appautoscaling_policy" "cpu" {
 }
 
 # --- Helpful outputs ---
-output "alb_dns_name" { value = aws_lb.app.dns_name }
+output "alb_dns_name"       { value = aws_lb.app.dns_name }
 output "ecr_repository_url" { value = aws_ecr_repository.app.repository_url }
+output "db_endpoint"        { value = aws_db_instance.main.endpoint }
 
 # ---- S3 bucket (private, for CloudFront only) ----
 # Optional override (user-supplied); otherwise we generate one
@@ -454,3 +524,80 @@ resource "aws_s3_bucket_policy" "fe" {
 output "frontend_bucket"       { value = aws_s3_bucket.fe.bucket }
 output "frontend_distribution" { value = aws_cloudfront_distribution.fe.id }
 output "frontend_domain"       { value = aws_cloudfront_distribution.fe.domain_name }
+
+# ---- S3 media bucket (private, for CloudFront only) ----
+resource "aws_s3_bucket" "media" {
+  bucket = "health-media-media-${random_id.suffix.hex}"
+  tags   = { Name = "health-media-media-${random_id.suffix.hex}" }
+}
+
+resource "aws_s3_bucket_public_access_block" "media" {
+  bucket                  = aws_s3_bucket.media.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# ---- CloudFront OAC for media bucket ----
+resource "aws_cloudfront_origin_access_control" "media_oac" {
+  name                              = "health-media-media-oac"
+  description                       = "OAC for media S3 origin"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+# ---- CloudFront distribution for media bucket ----
+resource "aws_cloudfront_distribution" "media" {
+  enabled = true
+  comment = "health-media media/images CDN"
+
+  origin {
+    domain_name              = aws_s3_bucket.media.bucket_regional_domain_name
+    origin_id                = "s3-media"
+    origin_access_control_id = aws_cloudfront_origin_access_control.media_oac.id
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "s3-media"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized managed policy
+  }
+
+  price_class = "PriceClass_100"
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+  viewer_certificate { cloudfront_default_certificate = true }
+}
+
+# ---- S3 bucket policy to allow media CloudFront OAC ----
+data "aws_iam_policy_document" "media_bucket" {
+  statement {
+    sid    = "AllowCloudFrontGet"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+    actions   = ["s3:GetObject"]
+    resources = ["${aws_s3_bucket.media.arn}/*"]
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.media.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "media" {
+  bucket = aws_s3_bucket.media.id
+  policy = data.aws_iam_policy_document.media_bucket.json
+}
+
+# ---- Media outputs ----
+output "media_bucket"              { value = aws_s3_bucket.media.bucket }
+output "media_distribution_domain" { value = aws_cloudfront_distribution.media.domain_name }

@@ -18,19 +18,9 @@ const adminAuth = (req, res, next) => {
 };
 
 const adminAuthCheck = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authorization token required' });
+  if (!req.session?.isAdmin) {
+    return res.status(401).json({ error: 'Not authenticated' });
   }
-
-  const token = authHeader.substring(7);
-  const adminPassword = process.env.ADMIN_PASSWORD;
-
-  if (token !== adminPassword) {
-    return res.status(401).json({ error: 'Invalid authorization token' });
-  }
-
   next();
 };
 

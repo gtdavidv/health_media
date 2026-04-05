@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import AdminAuth from './AdminAuth'
-import useAuth from '../hooks/useAuth'
+import RichTextEditor from './RichTextEditor'
 import '../styles/AddArticle.css'
 
 const AddArticle = () => {
   const navigate = useNavigate()
-  const { authToken, logout } = useAuth()
-  const [article, setArticle] = useState({ title: '', content: '' })
+  const [article, setArticle] = useState({ title: '', summary: '', content: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -18,20 +17,17 @@ const AddArticle = () => {
     setLoading(true)
     
     try {
-      const { title, content } = article
-      
+      const { title, summary, content } = article
+
       if (!title.trim() || !content.trim()) {
         setMessage('Title and content are required')
         return
       }
 
-      await axios.post(`/api/admin/articles`, 
-        { title, content },
-        { headers: { Authorization: `Bearer ${authToken}` }}
-      )
-      
+      await axios.post('/api/admin/articles', { title, summary, content })
+
       setMessage('Article created successfully!')
-      setArticle({ title: '', content: '' })
+      setArticle({ title: '', summary: '', content: '' })
       
       // Redirect to articles page after successful creation
       setTimeout(() => {
@@ -40,10 +36,9 @@ const AddArticle = () => {
       
     } catch (error) {
       if (error.response?.status === 401) {
-        logout()
+        window.location.reload()
         return
       }
-      
       setMessage(error.response?.data?.error || 'Error creating article')
       console.error('Error creating article:', error)
     } finally {
@@ -89,26 +84,23 @@ const AddArticle = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="content">Article Content</label>
+                <label htmlFor="summary">Summary <span className="field-optional">(optional)</span></label>
                 <textarea
-                  id="content"
-                  value={article.content}
-                  onChange={(e) => setArticle(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Write your article content here. You can use line breaks to separate paragraphs."
-                  rows="20"
-                  required
-                  className="content-textarea"
+                  id="summary"
+                  value={article.summary}
+                  onChange={(e) => setArticle(prev => ({ ...prev, summary: e.target.value }))}
+                  placeholder="A short description shown on the articles list. If left blank, an excerpt from the article will be used."
+                  rows="3"
+                  className="summary-input"
                 />
-                <div className="content-help">
-                  <p><strong>Formatting tips:</strong></p>
-                  <ul>
-                    <li>Use single line breaks for line breaks within a paragraph</li>
-                    <li>Use double line breaks (press Enter twice) to create new paragraphs with spacing</li>
-                    <li>Keep paragraphs focused and readable</li>
-                    <li>Include accurate, evidence-based information</li>
-                    <li>Remember to cite sources when referencing studies</li>
-                  </ul>
-                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Article Content</label>
+                <RichTextEditor
+                  content={article.content}
+                  onChange={(html) => setArticle(prev => ({ ...prev, content: html }))}
+                />
               </div>
 
               <div className="form-actions">

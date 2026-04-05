@@ -1,3 +1,21 @@
+/* Mobile-first */
+
+/* ─── Reset & Base ─────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Prevent font scaling in landscape on iOS */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Smooth scroll behaviour */
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,6 +23,19 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal overflow at the root level */
+  overflow-x: hidden;
+  /* Base font size — 16 px stays comfortable on mobile */
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* Slightly larger base on wider screens */
+@media (min-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
 }
 
 code {
@@ -12,10 +43,32 @@ code {
     monospace;
 }
 
-* {
-  box-sizing: border-box;
-}
+/* ─── Root ──────────────────────────────────────────────────────────────────── */
 
 #root {
   min-height: 100vh;
+  /* Prevent any child from punching through horizontally */
+  overflow-x: hidden;
+}
+
+/* ─── Images & Media ────────────────────────────────────────────────────────── */
+
+img,
+video,
+svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ─── Interactive elements ──────────────────────────────────────────────────── */
+
+/* Ensure all interactive elements have a minimum tap target on touch screens */
+button,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+a {
+  touch-action: manipulation;
 }

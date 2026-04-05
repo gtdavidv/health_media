@@ -1,0 +1,123 @@
+/* Mobile-first */
+
+.site-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  overflow: hidden; /* chat page manages its own scroll */
+}
+
+/* ─── Header ────────────────────────────────────────────────────────────────── */
+
+.site-header {
+  background-color: #282c34;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.site-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 56px;
+  justify-content: center;
+}
+
+/* ─── Logo / site title ─────────────────────────────────────────────────────── */
+
+.site-logo {
+  color: white;
+  text-decoration: none;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  padding: 8px 0;
+}
+
+.site-logo:hover {
+  opacity: 0.85;
+}
+
+/* ─── Nav ───────────────────────────────────────────────────────────────────── */
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 8px;
+}
+
+.site-nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.site-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.site-nav-link.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* ─── Main content area ─────────────────────────────────────────────────────── */
+
+.site-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;      /* critical — lets flex children shrink so chat doesn't overflow */
+  overflow-y: auto;   /* content pages scroll here; chat fills without adding scroll */
+}
+
+/* ─── Tablet (640 px) ───────────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .site-header-inner {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+
+  .site-nav {
+    padding-bottom: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* ─── Desktop (1024 px) ─────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .site-header-inner {
+    padding: 0 32px;
+  }
+
+  .site-logo {
+    font-size: 1.25rem;
+  }
+
+  .site-nav-link {
+    font-size: 0.9rem;
+    padding: 8px 14px;
+  }
+}

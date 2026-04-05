@@ -2,23 +2,19 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import AdminAuth from './AdminAuth'
-import useAuth from '../hooks/useAuth'
 import '../styles/AdminManage.css'
 
 const AdminManage = () => {
-  const { authToken } = useAuth()
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [deleteLoading, setDeleteLoading] = useState(null)
 
   useEffect(() => {
-    if (authToken) {
-      fetchArticles(authToken)
-    }
-  }, [authToken])
+    fetchArticles()
+  }, [])
 
-  const fetchArticles = async (token) => {
+  const fetchArticles = async () => {
     try {
       const response = await axios.get('/api/articles')
       setArticles(response.data)
@@ -35,11 +31,9 @@ const AdminManage = () => {
 
     setDeleteLoading(slug)
     try {
-      await axios.delete(`/api/admin/articles/${slug}`, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      })
+      await axios.delete(`/api/admin/articles/${slug}`)
       setMessage(`Article "${title}" deleted successfully!`)
-      await fetchArticles(authToken)
+      await fetchArticles()
     } catch (error) {
       setMessage('Error deleting article')
       console.error('Error deleting article:', error)
@@ -58,8 +52,11 @@ const AdminManage = () => {
           <h1>Manage Articles</h1>
           <div className="header-actions">
             <Link to="/admin/add-article" className="nav-btn primary">Add New Article</Link>
-            <Link to="/articles" className="nav-btn">Browse Articles</Link>
-            <Link to="/" className="nav-btn">Back to Chat</Link>
+            <Link to="/admin/pages" className="nav-btn">Pages</Link>
+            <Link to="/admin/guardrails" className="nav-btn">AI Guardrails</Link>
+            <Link to="/admin/studies" className="nav-btn">RAG Sources</Link>
+            <Link to="/admin/stats" className="nav-btn">View Stats</Link>
+            <Link to="/" className="nav-btn">View Site</Link>
             <button onClick={logout} className="logout-btn">Logout</button>
           </div>
         </div>
@@ -128,12 +125,15 @@ const AdminManage = () => {
                 </div>
 
                 <div className="article-actions">
-                  <button 
+                  <Link to={`/admin/edit-article/${article.slug}`} className="nav-btn">
+                    Edit
+                  </Link>
+                  <button
                     onClick={() => handleDelete(article.slug, article.title)}
                     disabled={deleteLoading === article.slug}
                     className="delete-btn"
                   >
-                    {deleteLoading === article.slug ? 'Deleting...' : 'Delete Article'}
+                    {deleteLoading === article.slug ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>

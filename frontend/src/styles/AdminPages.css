@@ -1,0 +1,313 @@
+/* Mobile-first — reuses shared admin patterns */
+
+.admin-pages-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* ─── Shared admin header ───────────────────────────────────────────────────── */
+
+.admin-header {
+  background: white;
+  border-bottom: 1px solid #dee2e6;
+  padding: 16px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.header-content h1 {
+  color: #333;
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Status message ────────────────────────────────────────────────────────── */
+
+.message {
+  max-width: 1400px;
+  margin: 16px auto;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.95rem;
+  width: calc(100% - 32px);
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* ─── Nav + action buttons ──────────────────────────────────────────────────── */
+
+.nav-btn {
+  color: #007bff;
+  text-decoration: none;
+  padding: 10px 16px;
+  border: 2px solid #007bff;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-btn:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.nav-btn.primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.nav-btn.primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.logout-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.logout-btn:hover { background-color: #c82333; }
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  min-height: 44px;
+  transition: background-color 0.2s ease;
+}
+
+.delete-btn:hover:not(:disabled) { background-color: #c82333; }
+.delete-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ─── Main content ──────────────────────────────────────────────────────────── */
+
+.admin-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.pages-summary {
+  margin-bottom: 24px;
+}
+
+.pages-summary h2 {
+  font-size: 1.25rem;
+  color: #333;
+  margin: 0 0 4px;
+}
+
+/* ─── Empty state ───────────────────────────────────────────────────────────── */
+
+.no-pages {
+  text-align: center;
+  padding: 48px 16px;
+}
+
+.no-pages h3 {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.no-pages p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.add-first-btn {
+  display: inline-block;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.add-first-btn:hover { background-color: #0056b3; }
+
+/* ─── Pages grid ────────────────────────────────────────────────────────────── */
+
+.pages-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* ─── Page card ─────────────────────────────────────────────────────────────── */
+
+.page-card {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.page-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.page-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+  margin: 0;
+}
+
+.view-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.view-link:hover { text-decoration: underline; }
+
+.page-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.meta-slug {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-family: monospace;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.badge-home {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.badge-nav {
+  background-color: #cce5ff;
+  color: #004085;
+  border: 1px solid #b8daff;
+}
+
+.page-card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ─── Tablet (640 px) ───────────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .header-content {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+  }
+
+  .header-content h1 {
+    font-size: 1.6rem;
+    text-align: left;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+  }
+
+  .admin-main {
+    padding: 28px 24px 56px;
+  }
+
+  .pages-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .message { width: auto; }
+}
+
+/* ─── Desktop (1024 px) ─────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .header-content {
+    padding: 0 32px;
+  }
+
+  .admin-main {
+    padding: 36px 32px 64px;
+  }
+
+  .pages-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}

@@ -1,0 +1,145 @@
+/* Mobile-first */
+
+.page-view-container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 16px 56px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.page-view-loading,
+.page-view-error {
+  text-align: center;
+  padding: 60px 16px;
+  color: #666;
+}
+
+.page-view-error h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.page-view-home-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.page-view-home-link:hover {
+  text-decoration: underline;
+}
+
+/* ─── Article element ───────────────────────────────────────────────────────── */
+
+.page-view-article {
+  background: white;
+  border-radius: 12px;
+  padding: 28px 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+}
+
+.page-view-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 24px;
+  line-height: 1.25;
+}
+
+/* ─── Rich content styles ───────────────────────────────────────────────────── */
+
+.rich-content {
+  color: #374151;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.rich-content h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 28px 0 12px;
+}
+
+.rich-content h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 22px 0 10px;
+}
+
+.rich-content p {
+  margin: 0 0 16px;
+}
+
+.rich-content ul,
+.rich-content ol {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.rich-content li {
+  margin-bottom: 6px;
+}
+
+.rich-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.rich-content a {
+  color: #007bff;
+}
+
+.rich-content a:hover {
+  text-decoration: none;
+}
+
+.rich-content blockquote {
+  border-left: 4px solid #d1d5db;
+  margin: 16px 0;
+  padding: 8px 16px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* ─── Tablet (640 px) ───────────────────────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .page-view-container {
+    padding: 36px 24px 64px;
+  }
+
+  .page-view-article {
+    padding: 36px 32px;
+  }
+
+  .page-view-title {
+    font-size: 2rem;
+  }
+
+  .rich-content {
+    font-size: 1.05rem;
+  }
+}
+
+/* ─── Desktop (1024 px) ─────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .page-view-container {
+    padding: 48px 24px 80px;
+  }
+
+  .page-view-article {
+    padding: 48px 48px;
+  }
+
+  .page-view-title {
+    font-size: 2.25rem;
+    margin-bottom: 32px;
+  }
+}

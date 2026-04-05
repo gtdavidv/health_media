@@ -3,27 +3,38 @@ import { Link } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 import '../styles/AdminAuth.css'
 
-const AdminAuth = ({ children, title = "Admin Access Required", showNavigation = true }) => {
-  const { isAuthenticated, authToken, loading, login, logout } = useAuth()
+const AdminAuth = ({ children, title = 'Admin Access Required', showNavigation = true }) => {
+  const { isAuthenticated, loading, login, logout } = useAuth()
   const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    
+    e.preventDefault()
     if (!password.trim()) {
-      setMessage('Password is required');
+      setMessage('Password is required')
       return
     }
-
-    const result = await login(password);
-    
+    setSubmitting(true)
+    const result = await login(password)
     if (result.success) {
-      setPassword('');
-      setMessage('');
+      setPassword('')
+      setMessage('')
     } else {
-      setMessage(result.message);
+      setMessage(result.message)
     }
+    setSubmitting(false)
+  }
+
+  // Checking session on mount
+  if (loading) {
+    return (
+      <div className="admin-auth-container">
+        <div className="admin-login">
+          <p style={{ textAlign: 'center', color: '#666' }}>Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
@@ -41,18 +52,18 @@ const AdminAuth = ({ children, title = "Admin Access Required", showNavigation =
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter admin password"
                 required
+                autoFocus
               />
             </div>
-            <button type="submit" disabled={loading} className="login-btn">
-              {loading ? 'Logging in...' : 'Login'}
+            <button type="submit" disabled={submitting} className="login-btn">
+              {submitting ? 'Logging in...' : 'Login'}
             </button>
           </form>
           {message && <div className="message error">{message}</div>}
-          
+
           {showNavigation && (
             <div className="back-to-site">
-              <Link to="/" className="back-link">← Back to Chat</Link>
-              <Link to="/articles" className="back-link">Browse Articles</Link>
+              <Link to="/" className="back-link">← Back to site</Link>
             </div>
           )}
         </div>

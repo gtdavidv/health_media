@@ -1,11 +1,12 @@
 const express = require('express');
-const dynamoService = require('../services/dynamoService');
+const articleService = require('../services/articleService');
+const pool = require('../db');
 const router = express.Router();
 
 // Get all articles (public endpoint)
 router.get('/', async (req, res) => {
   try {
-    const articles = await dynamoService.getAllArticles();
+    const articles = await articleService.getAllArticles();
     res.json(articles);
   } catch (error) {
     console.error('Error fetching articles:', error);
@@ -17,12 +18,14 @@ router.get('/', async (req, res) => {
 router.get('/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
-    const article = await dynamoService.getArticleBySlug(slug);
+    const article = await articleService.getArticleBySlug(slug);
     
     if (!article) {
       return res.status(404).json({ error: 'Article not found' });
     }
-    
+
+    pool.query('INSERT INTO page_views (slug) VALUES ($1)', [slug]).catch(() => {})
+
     res.json(article);
   } catch (error) {
     console.error('Error fetching article:', error);

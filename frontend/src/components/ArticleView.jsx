@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import DOMPurify from 'dompurify'
 import '../styles/ArticleView.css'
 //import { API_BASE } from '../App.jsx'
 
@@ -51,7 +52,7 @@ const ArticleView = () => {
             <Link to="/articles" className="button secondary">
               Browse Articles
             </Link>
-            <Link to="/" className="button primary">
+            <Link to="/chat" className="button primary">
               Back to Chat
             </Link>
           </div>
@@ -104,24 +105,10 @@ const ArticleView = () => {
           </div>
         </header>
 
-        <div className="article-body">
-          {article.content.split('\n\n').map((paragraph, index) => {
-            if (paragraph.trim() === '') {
-              return null
-            }
-            
-            // Handle single newlines within paragraphs as line breaks
-            const lines = paragraph.split('\n').map((line, lineIndex) => (
-              lineIndex === 0 ? line : [<br key={lineIndex} />, line]
-            )).flat()
-            
-            return (
-              <p key={index} className="article-paragraph">
-                {lines}
-              </p>
-            )
-          }).filter(Boolean)}
-        </div>
+        <div
+          className="article-body"
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
+        />
       </article>
 
       <footer className="article-footer">
@@ -136,7 +123,7 @@ const ArticleView = () => {
             <Link to="/articles" className="button secondary">
               Read More Articles
             </Link>
-            <Link to="/" className="button primary">
+            <Link to="/chat" className="button primary">
               Ask Our Assistant
             </Link>
           </div>

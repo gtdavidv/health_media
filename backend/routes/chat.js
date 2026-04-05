@@ -2,6 +2,7 @@ const express = require('express');
 const { ChatOpenAI } = require('@langchain/openai');
 const { SystemMessage, HumanMessage, AIMessage } = require('langchain/schema');
 const chromaService = require('../services/chromaService');
+const pool = require('../db');
 const router = express.Router();
 
 // Initialize LangChain ChatOpenAI model
@@ -13,8 +14,8 @@ const chatModel = new ChatOpenAI({
 });
 
 // System message for health media assistance with RAG
-const createSystemMessage = (relevantStudies = []) => {
-  let systemContent = `You are a knowledgeable and empathetic assistant specializing in health media. You provide accurate, up-to-date information based on current research and clinical guidelines.`;
+const createSystemMessage = (guardrailsContent = '', relevantStudies = []) => {
+  let systemContent = guardrailsContent;
 
   if (relevantStudies.length > 0) {
     systemContent += `\n\nRelevant research context:\n`;
@@ -23,20 +24,6 @@ const createSystemMessage = (relevantStudies = []) => {
     });
     systemContent += `\nUse this research context to inform your response. Always cite sources when referencing specific studies.`;
   }
-
-  systemContent += `\n\nGuidelines for your responses:
-- Be empathetic and understanding
-- Provide evidence-based information
-- Always recommend consulting healthcare professionals for medical decisions
-- Acknowledge the complexity and variability of health media experiences
-- Keep responses concise but informative
-- Avoid giving specific medical diagnoses or prescribing treatments
-- When referencing research, include citations
-- Be sensitive to mood episodes and crisis situations
-
-If asked about topics unrelated to health media, politely redirect the conversation back to health media-related topics.
-
-Do not assume the human has any condition or make diagnostic assessments.`;
 
   return new SystemMessage(systemContent);
 };
@@ -92,6 +79,10 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ error: 'OpenAI API key not configured' });
     }
 
+    // Load guardrails from database
+    const { rows } = await pool.query('SELECT content FROM guardrails WHERE id = 1');
+    const guardrailsContent = rows[0]?.content || '';
+
     // Initialize Chroma service
     await chromaService.initialize();
 
@@ -99,8 +90,8 @@ router.post('/', async (req, res) => {
     const lastUserMessage = userMessages[userMessages.length - 1];
     const relevantStudies = await chromaService.queryRelevantStudies(lastUserMessage, 3);
 
-    // Create system message with relevant studies
-    const systemMessage = createSystemMessage(relevantStudies);
+    // Create system message with guardrails and relevant studies
+    const systemMessage = createSystemMessage(guardrailsContent, relevantStudies);
 
     // Trim conversation history to fit within token limits
     const trimmedHistory = trimConversationHistory(conversationHistory, systemMessage.content);
@@ -130,6 +121,8 @@ router.post('/', async (req, res) => {
     if (!aiResponse) {
       throw new Error('No response received from ChatOpenAI');
     }
+
+    pool.query('INSERT INTO chat_events (message_count) VALUES ($1)', [userMessages.length]).catch(() => {})
 
     res.json({
       response: aiResponse.trim(),

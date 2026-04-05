@@ -3,67 +3,36 @@ import axios from 'axios'
 
 const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [authToken, setAuthToken] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('admin-token')
-    if (token) {
-      setAuthToken(token)
-      setIsAuthenticated(true)
-    }
+    axios.get('/api/admin/me')
+      .then(() => setIsAuthenticated(true))
+      .catch(() => setIsAuthenticated(false))
+      .finally(() => setLoading(false))
   }, [])
 
   const login = async (password) => {
-    setLoading(true)
-    
     try {
-      const response = await axios.post('/api/admin/login', { password })
-      const token = response.data.token;
-      
-      setAuthToken(token)
+      await axios.post('/api/admin/login', { password })
       setIsAuthenticated(true)
-      localStorage.setItem('admin-token', token)
-      
-      return { success: true, message: 'Login successful!' }
-      
+      return { success: true }
     } catch (error) {
-      if (error.response?.status === 401) {
-        logout();
-      }
-      
-      console.error('Login error:', error)
-      
-      let errorMessage = 'Login failed - please try again'
-      
-      if (error.response?.data?.error) {
-        errorMessage = error.response.data.error
-      } else if (error.response?.status === 401) {
-        errorMessage = 'Invalid password'
-      } else if (error.response?.status === 500) {
-        errorMessage = 'Server configuration error - admin password not set'
-      }
-      
-      return { success: false, message: errorMessage }
-    
-    } finally {
-      setLoading(false)
+      const msg = error.response?.data?.error || 'Login failed'
+      return { success: false, message: msg }
     }
   }
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setAuthToken('');
-    localStorage.removeItem('admin-token');
+  const logout = async () => {
+    try {
+      await axios.post('/api/admin/logout')
+    } catch {
+      // ignore — clear client state regardless
+    }
+    setIsAuthenticated(false)
   }
 
-  return {
-    isAuthenticated,
-    authToken,
-    loading,
-    login,
-    logout
-  }
+  return { isAuthenticated, loading, login, logout }
 }
 
 export default useAuth
