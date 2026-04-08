@@ -1,39 +1,65 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import '../styles/ArticlesList.css'
 
 const ArticlesList = () => {
-  const [articles, setArticles] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [allArticles, setAllArticles] = useState([])
+  const [displayed, setDisplayed] = useState([])
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [searchLoading, setSearchLoading] = useState(false)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
+  const [searchCount, setSearchCount] = useState(null) // null = not in search mode
 
+  // Initial load
   useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        const response = await axios.get(`/api/articles`)
-        setArticles(response.data)
-      } catch (error) {
-        setError('Failed to fetch articles')
-        console.error('Error fetching articles:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchArticles()
+    axios.get('/api/articles')
+      .then(res => {
+        setAllArticles(res.data)
+        setDisplayed(res.data)
+      })
+      .catch(() => setError('Failed to fetch articles'))
+      .finally(() => setInitialLoading(false))
   }, [])
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return articles
-    return articles.filter(a =>
-      a.title.toLowerCase().includes(q) ||
-      (a.summary || a.excerpt || '').toLowerCase().includes(q)
-    )
-  }, [articles, query])
+  // Debounced search
+  useEffect(() => {
+    const q = query.trim()
 
-  if (loading) {
+    if (q.length < 2) {
+      setDisplayed(allArticles)
+      setSearchCount(null)
+      setSearchLoading(false)
+      return
+    }
+
+    setSearchLoading(true)
+    const timer = setTimeout(() => {
+      axios.get('/api/articles', { params: { q } })
+        .then(res => {
+          setDisplayed(res.data)
+          setSearchCount(res.data.length)
+        })
+        .catch(() => {
+          // fall back to client-side filter on network error
+          const lower = q.toLowerCase()
+          const fallback = allArticles.filter(a =>
+            a.title.toLowerCase().includes(lower) ||
+            (a.summary || a.excerpt || '').toLowerCase().includes(lower)
+          )
+          setDisplayed(fallback)
+          setSearchCount(fallback.length)
+        })
+        .finally(() => setSearchLoading(false))
+    }, 350)
+
+    return () => clearTimeout(timer)
+  }, [query, allArticles])
+
+  const clearSearch = () => setQuery('')
+
+  if (initialLoading) {
     return (
       <div className="articles-list-container">
         <div className="loading">Loading articles...</div>
@@ -49,6 +75,8 @@ const ArticlesList = () => {
     )
   }
 
+  const isSearching = query.trim().length >= 2
+
   return (
     <div className="articles-list-container">
       <header className="articles-header">
@@ -59,22 +87,38 @@ const ArticlesList = () => {
       </header>
 
       <div className="articles-search">
-        <input
-          type="search"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search articles..."
-          className="search-input"
-          aria-label="Search articles"
-        />
+        <div className="search-input-wrap">
+          <input
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search articles..."
+            className="search-input"
+            aria-label="Search articles"
+          />
+          {searchLoading && <span className="search-spinner" aria-hidden="true" />}
+        </div>
+        {isSearching && (
+          <div className="search-meta">
+            {searchLoading ? (
+              <span className="search-status">Searching…</span>
+            ) : (
+              <span className="search-status">
+                {searchCount === 1 ? '1 result' : `${searchCount} results`} for "{query.trim()}"
+              </span>
+            )}
+            <button className="clear-search" onClick={clearSearch}>Clear</button>
+          </div>
+        )}
       </div>
 
-      {filtered.length === 0 ? (
+      {displayed.length === 0 ? (
         <div className="no-articles">
-          {query ? (
+          {isSearching ? (
             <>
-              <h2>No results for "{query}"</h2>
-              <button className="clear-search" onClick={() => setQuery('')}>Clear search</button>
+              <h2>No results for "{query.trim()}"</h2>
+              <p>Try different keywords or browse all articles.</p>
+              <button className="clear-search" onClick={clearSearch}>Show all articles</button>
             </>
           ) : (
             <>
@@ -85,7 +129,7 @@ const ArticlesList = () => {
         </div>
       ) : (
         <div className="articles-grid">
-          {filtered.map((article) => {
+          {displayed.map((article) => {
             const preview = article.summary || article.excerpt || ''
             return (
               <Link

@@ -1,4 +1,14 @@
 require('dotenv').config();
+
+// ─── Startup env validation ───────────────────────────────────────────────────
+const REQUIRED_ENV = ['DATABASE_URL', 'OPENAI_KEY', 'ADMIN_PASSWORD', 'SESSION_SECRET'];
+const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missing.length) {
+  console.error(`Missing required environment variables: ${missing.join(', ')}`);
+  console.error('Server will not start until these are set.');
+  process.exit(1);
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -11,20 +21,23 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProd = process.env.NODE_ENV === 'production';
 
-// Middleware
+// ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session
+// ─── Session ──────────────────────────────────────────────────────────────────
 app.use(session({
   store: new pgSession({
     pool,
     createTableIfMissing: true,
   }),
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   name: 'hm.sid',
@@ -36,10 +49,11 @@ app.use(session({
   },
 }));
 
-// API Routes
+// ─── Routes ───────────────────────────────────────────────────────────────────
+app.use('/', require('./routes/sitemap'));
 app.use('/api', require('./routes'));
 
-// Health check endpoint — probes DB so the ALB pulls unhealthy instances
+// ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');
@@ -50,13 +64,12 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Error handling middleware
+// ─── Error handlers ───────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });

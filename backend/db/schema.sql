@@ -1,15 +1,23 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS articles (
-  slug       TEXT PRIMARY KEY,
-  title      TEXT NOT NULL,
-  content    TEXT NOT NULL,
-  summary    TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  slug             TEXT PRIMARY KEY,
+  title            TEXT NOT NULL,
+  content          TEXT NOT NULL,
+  summary          TEXT,
+  meta_description TEXT,
+  og_image         TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS articles_created_at_idx ON articles (created_at DESC);
+
+-- Full-text search: title weighted higher than summary
+CREATE INDEX IF NOT EXISTS articles_fts_idx ON articles USING GIN (
+  (setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+   setweight(to_tsvector('english', coalesce(summary, '')), 'B'))
+);
 
 CREATE TABLE IF NOT EXISTS studies (
   id         SERIAL PRIMARY KEY,

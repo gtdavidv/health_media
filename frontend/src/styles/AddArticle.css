@@ -257,6 +257,43 @@
   margin-bottom: 4px;
 }
 
+/* ─── SEO section ───────────────────────────────────────────────────────────── */
+
+.seo-section {
+  margin-top: 32px;
+  padding: 20px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.seo-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6c757d;
+  margin: 0 0 16px;
+}
+
+.seo-char-count {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.seo-char-count--warn {
+  color: #e67e22;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .seo-section {
+    padding: 24px 20px;
+  }
+}
+
 /* ─── Form action buttons ───────────────────────────────────────────────────── */
 
 .form-actions {

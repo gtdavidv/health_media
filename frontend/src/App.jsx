@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import Layout from './components/Layout'
 import HomePage from './components/HomePage'
 import ChatPage from './components/ChatPage'
@@ -18,6 +19,7 @@ import './App.css'
 
 function App() {
   return (
+    <HelmetProvider>
     <Router>
       <Routes>
         {/* Public routes — wrapped in global nav Layout */}
@@ -41,6 +43,7 @@ function App() {
         <Route path="/admin/edit-page/:slug" element={<EditPage />} />
       </Routes>
     </Router>
+    </HelmetProvider>
   )
 }
 

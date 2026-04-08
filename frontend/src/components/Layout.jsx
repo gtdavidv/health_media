@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import axios from 'axios'
 import '../styles/Layout.css'
 
@@ -15,6 +16,11 @@ const Layout = () => {
 
   return (
     <div className="site-layout">
+      <Helmet>
+        <title>Health Media</title>
+        <meta name="description" content="Evidence-based health information and resources." />
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+      </Helmet>
       <header className="site-header">
         <div className="site-header-inner">
           <Link to="/" className="site-logo">Health Media</Link>

@@ -8,7 +8,7 @@ import '../styles/AddArticle.css'
 const EditArticle = () => {
   const { slug } = useParams()
   const navigate = useNavigate()
-  const [article, setArticle] = useState({ title: '', summary: '', content: '' })
+  const [article, setArticle] = useState({ title: '', summary: '', content: '', metaDescription: '', ogImage: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -17,7 +17,13 @@ const EditArticle = () => {
     const fetchArticle = async () => {
       try {
         const response = await axios.get(`/api/articles/${slug}`)
-        setArticle({ title: response.data.title, summary: response.data.summary || '', content: response.data.content })
+        setArticle({
+          title: response.data.title,
+          summary: response.data.summary || '',
+          content: response.data.content,
+          metaDescription: response.data.metaDescription || '',
+          ogImage: response.data.ogImage || '',
+        })
       } catch (error) {
         setMessage('Failed to load article')
       } finally {
@@ -32,14 +38,14 @@ const EditArticle = () => {
     setSaving(true)
 
     try {
-      const { title, summary, content } = article
+      const { title, summary, content, metaDescription, ogImage } = article
 
       if (!title.trim() || !content.trim()) {
         setMessage('Title and content are required')
         return
       }
 
-      await axios.put(`/api/admin/articles/${slug}`, { title, summary, content })
+      await axios.put(`/api/admin/articles/${slug}`, { title, summary, content, metaDescription, ogImage })
 
       setMessage('Article updated successfully!')
       setTimeout(() => navigate('/admin/manage'), 1500)
@@ -110,6 +116,40 @@ const EditArticle = () => {
                     content={article.content}
                     onChange={(html) => setArticle(prev => ({ ...prev, content: html }))}
                   />
+                </div>
+
+                <div className="seo-section">
+                  <h3 className="seo-section-title">SEO</h3>
+                  <div className="form-group">
+                    <label htmlFor="metaDescription">
+                      Meta Description <span className="field-optional">(optional)</span>
+                    </label>
+                    <textarea
+                      id="metaDescription"
+                      value={article.metaDescription}
+                      onChange={(e) => setArticle(prev => ({ ...prev, metaDescription: e.target.value }))}
+                      placeholder="Search engine description. If blank, falls back to Summary then article text."
+                      rows="2"
+                      className="summary-input"
+                      maxLength={160}
+                    />
+                    <div className={`seo-char-count ${article.metaDescription.length > 155 ? 'seo-char-count--warn' : ''}`}>
+                      {article.metaDescription.length} / 160
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="ogImage">
+                      Social Image URL <span className="field-optional">(optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      id="ogImage"
+                      value={article.ogImage}
+                      onChange={(e) => setArticle(prev => ({ ...prev, ogImage: e.target.value }))}
+                      placeholder="https://… — shown when shared on social media"
+                      className="title-input"
+                    />
+                  </div>
                 </div>
 
                 <div className="form-actions">

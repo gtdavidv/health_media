@@ -34,13 +34,13 @@ router.get('/me', adminAuthCheck, (req, res) => {
 // Create article endpoint
 router.post('/articles', adminAuthCheck, async (req, res) => {
   try {
-    const { title, content, summary } = req.body;
+    const { title, content, summary, metaDescription, ogImage } = req.body;
 
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
     }
 
-    const article = await articleService.createArticle(title, content, summary);
+    const article = await articleService.createArticle(title, content, summary, metaDescription, ogImage);
     res.status(201).json(article);
   } catch (error) {
     console.error('Error creating article:', error);
@@ -55,13 +55,13 @@ router.post('/articles', adminAuthCheck, async (req, res) => {
 router.put('/articles/:slug', adminAuthCheck, async (req, res) => {
   try {
     const { slug } = req.params;
-    const { title, content, summary } = req.body;
+    const { title, content, summary, metaDescription, ogImage } = req.body;
 
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' });
     }
 
-    const article = await articleService.updateArticle(slug, title, content, summary);
+    const article = await articleService.updateArticle(slug, title, content, summary, metaDescription, ogImage);
     res.json(article);
   } catch (error) {
     console.error('Error updating article:', error);

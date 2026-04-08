@@ -7,7 +7,7 @@ import '../styles/AddArticle.css'
 
 const AddArticle = () => {
   const navigate = useNavigate()
-  const [article, setArticle] = useState({ title: '', summary: '', content: '' })
+  const [article, setArticle] = useState({ title: '', summary: '', content: '', metaDescription: '', ogImage: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -17,17 +17,17 @@ const AddArticle = () => {
     setLoading(true)
     
     try {
-      const { title, summary, content } = article
+      const { title, summary, content, metaDescription, ogImage } = article
 
       if (!title.trim() || !content.trim()) {
         setMessage('Title and content are required')
         return
       }
 
-      await axios.post('/api/admin/articles', { title, summary, content })
+      await axios.post('/api/admin/articles', { title, summary, content, metaDescription, ogImage })
 
       setMessage('Article created successfully!')
-      setArticle({ title: '', summary: '', content: '' })
+      setArticle({ title: '', summary: '', content: '', metaDescription: '', ogImage: '' })
       
       // Redirect to articles page after successful creation
       setTimeout(() => {
@@ -103,13 +103,47 @@ const AddArticle = () => {
                 />
               </div>
 
+              <div className="seo-section">
+                <h3 className="seo-section-title">SEO</h3>
+                <div className="form-group">
+                  <label htmlFor="metaDescription">
+                    Meta Description <span className="field-optional">(optional)</span>
+                  </label>
+                  <textarea
+                    id="metaDescription"
+                    value={article.metaDescription}
+                    onChange={(e) => setArticle(prev => ({ ...prev, metaDescription: e.target.value }))}
+                    placeholder="Search engine description. If blank, falls back to Summary then article text."
+                    rows="2"
+                    className="summary-input"
+                    maxLength={160}
+                  />
+                  <div className={`seo-char-count ${article.metaDescription.length > 155 ? 'seo-char-count--warn' : ''}`}>
+                    {article.metaDescription.length} / 160
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="ogImage">
+                    Social Image URL <span className="field-optional">(optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    id="ogImage"
+                    value={article.ogImage}
+                    onChange={(e) => setArticle(prev => ({ ...prev, ogImage: e.target.value }))}
+                    placeholder="https://… — shown when shared on social media"
+                    className="title-input"
+                  />
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button type="submit" disabled={loading} className="submit-btn">
                   {loading ? 'Creating Article...' : 'Create Article'}
                 </button>
                 <button 
                   type="button" 
-                  onClick={() => setArticle({ title: '', content: '' })} 
+                  onClick={() => setArticle({ title: '', summary: '', content: '', metaDescription: '', ogImage: '' })}
                   className="clear-btn"
                   disabled={loading}
                 >

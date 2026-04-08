@@ -326,7 +326,9 @@ resource "aws_ecs_task_definition" "api" {
     }
     essential   = true
     environment = [
-      {name = "MEDIA_CDN_DOMAIN", value = aws_cloudfront_distribution.media.domain_name}
+      {name = "NODE_ENV",        value = "production"},
+      {name = "MEDIA_CDN_DOMAIN", value = aws_cloudfront_distribution.media.domain_name},
+      {name = "FRONTEND_URL",    value = "https://${aws_cloudfront_distribution.fe.domain_name}"},
     ]
     secrets     = [
       {name = "OPENAI_KEY",     valueFrom = "${data.aws_secretsmanager_secret.openai.arn}:health_media_openai_key::"},

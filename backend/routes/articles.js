@@ -3,10 +3,13 @@ const articleService = require('../services/articleService');
 const pool = require('../db');
 const router = express.Router();
 
-// Get all articles (public endpoint)
+// Get all articles, or search with ?q= (public endpoint)
 router.get('/', async (req, res) => {
   try {
-    const articles = await articleService.getAllArticles();
+    const q = (req.query.q || '').trim();
+    const articles = q.length >= 2
+      ? await articleService.searchArticles(q)
+      : await articleService.getAllArticles();
     res.json(articles);
   } catch (error) {
     console.error('Error fetching articles:', error);

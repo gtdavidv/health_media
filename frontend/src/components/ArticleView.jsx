@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import DOMPurify from 'dompurify'
+import { Helmet } from 'react-helmet-async'
 import '../styles/ArticleView.css'
 //import { API_BASE } from '../App.jsx'
 
@@ -65,8 +66,27 @@ const ArticleView = () => {
     return null
   }
 
+  const description = article.metaDescription
+    || article.summary
+    || DOMPurify.sanitize(article.content, { ALLOWED_TAGS: [] }).slice(0, 160)
+  const canonical = `${window.location.origin}/articles/${article.slug}`
+
   return (
     <div className="article-view-container">
+      <Helmet>
+        <title>{article.title} | Health Media</title>
+        <meta name="description" content={description} />
+        <link rel="canonical" href={canonical} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:url" content={canonical} />
+        {article.ogImage && <meta property="og:image" content={article.ogImage} />}
+        <meta property="article:published_time" content={article.createdAt} />
+        {article.updatedAt !== article.createdAt && (
+          <meta property="article:modified_time" content={article.updatedAt} />
+        )}
+      </Helmet>
       <nav className="article-nav">
         <button 
           onClick={() => navigate(-1)} 
