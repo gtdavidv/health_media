@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { adminAuth, adminAuthCheck } = require('../middleware/adminAuth');
 const articleService = require('../services/articleService');
+const pool = require('../db');
 const router = express.Router();
 
 const loginLimiter = rateLimit({
@@ -84,6 +85,27 @@ router.delete('/articles/:slug', adminAuthCheck, async (req, res) => {
       return res.status(404).json({ error: error.message });
     }
     res.status(500).json({ error: 'Failed to delete article' });
+  }
+});
+
+// PUT /api/admin/settings
+router.put('/settings', adminAuthCheck, async (req, res) => {
+  const ALLOWED_KEYS = ['site_name', 'articles_heading', 'articles_subtitle'];
+  const updates = Object.entries(req.body).filter(([k]) => ALLOWED_KEYS.includes(k));
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'No valid settings provided' });
+  }
+  try {
+    for (const [key, value] of updates) {
+      await pool.query(
+        'INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+        [key, value]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error saving settings:', err);
+    res.status(500).json({ error: 'Failed to save settings' });
   }
 });
 

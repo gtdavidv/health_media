@@ -6,24 +6,28 @@ import '../styles/Layout.css'
 
 const Layout = () => {
   const [navPages, setNavPages] = useState([])
+  const [siteName, setSiteName] = useState('Health Media')
   const location = useLocation()
 
   useEffect(() => {
     axios.get('/api/pages/nav')
       .then(res => setNavPages(res.data))
-      .catch(() => {}) // nav pages are optional
+      .catch(() => {})
+    axios.get('/api/settings')
+      .then(res => { if (res.data.site_name) setSiteName(res.data.site_name) })
+      .catch(() => {})
   }, [])
 
   return (
     <div className="site-layout">
       <Helmet>
-        <title>Health Media</title>
+        <title>{siteName}</title>
         <meta name="description" content="Evidence-based health information and resources." />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
       </Helmet>
       <header className="site-header">
         <div className="site-header-inner">
-          <Link to="/" className="site-logo">Health Media</Link>
+          <Link to="/" className="site-logo">{siteName}</Link>
           <nav className="site-nav">
             <Link
               to="/articles"

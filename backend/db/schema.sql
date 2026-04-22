@@ -70,3 +70,14 @@ CREATE TABLE IF NOT EXISTS chat_events (
   message_count INTEGER NOT NULL DEFAULT 1,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+INSERT INTO site_settings (key, value) VALUES
+  ('site_name', 'Health Media'),
+  ('articles_heading', 'Health Media Articles'),
+  ('articles_subtitle', 'Educational resources and information about health media')
+ON CONFLICT (key) DO NOTHING;

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import Layout from './components/Layout'
 import HomePage from './components/HomePage'
@@ -13,6 +13,7 @@ import AdminGuardrails from './components/AdminGuardrails'
 import AdminStats from './components/AdminStats'
 import AdminStudies from './components/AdminStudies'
 import AdminPages from './components/AdminPages'
+import AdminSettings from './components/AdminSettings'
 import AddPage from './components/AddPage'
 import EditPage from './components/EditPage'
 import './App.css'
@@ -32,6 +33,7 @@ function App() {
         </Route>
 
         {/* Admin routes — full-page, own headers */}
+        <Route path="/admin" element={<Navigate to="/admin/manage" replace />} />
         <Route path="/admin/add-article" element={<AddArticle />} />
         <Route path="/admin/edit-article/:slug" element={<EditArticle />} />
         <Route path="/admin/manage" element={<AdminManage />} />
@@ -41,6 +43,7 @@ function App() {
         <Route path="/admin/pages" element={<AdminPages />} />
         <Route path="/admin/add-page" element={<AddPage />} />
         <Route path="/admin/edit-page/:slug" element={<EditPage />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
       </Routes>
     </Router>
     </HelmetProvider>

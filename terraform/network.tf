@@ -4,6 +4,11 @@ terraform {
     aws    = { source = "hashicorp/aws",    version = "~> 5.0" }
     random = { source = "hashicorp/random", version = "~> 3.0" }
   }
+  backend "s3" {
+    bucket = "health-media-tfstate-990521646754"
+    key    = "terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 provider "aws" { region = "us-east-1" }
 
@@ -86,7 +91,6 @@ resource "aws_security_group" "alb" {
 resource "aws_security_group" "ecs_tasks" {
   name   = "${var.name}-tasks-sg"
   vpc_id = aws_vpc.main.id
-  # app port placeholder; we’ll align with the task definition later
   ingress {
     from_port       = 8000
     to_port         = 8000
@@ -147,7 +151,6 @@ resource "aws_ecs_cluster" "this" {
 data "aws_iam_policy_document" "task_exec_assume" {
   statement {
     actions = ["sts:AssumeRole"]
-
     principals {
       type        = "Service"
       identifiers = ["ecs-tasks.amazonaws.com"]
@@ -298,7 +301,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# --- Task definition (Node API placeholder) ---
+# --- Task definition ---
 locals {
   container_port = 8000
   cpu  = 512 # 0.5 vCPU
@@ -326,16 +329,17 @@ resource "aws_ecs_task_definition" "api" {
     }
     essential   = true
     environment = [
-      {name = "NODE_ENV",        value = "production"},
+      {name = "NODE_ENV",         value = "production"},
+      {name = "PORT",             value = "8000"},
       {name = "MEDIA_CDN_DOMAIN", value = aws_cloudfront_distribution.media.domain_name},
-      {name = "FRONTEND_URL",    value = "https://${aws_cloudfront_distribution.fe.domain_name}"},
+      {name = "FRONTEND_URL",     value = "https://${aws_cloudfront_distribution.fe.domain_name}"},
+      {name = "MEDIA_BUCKET",     value = aws_s3_bucket.media.bucket},
     ]
     secrets     = [
-      {name = "OPENAI_KEY",     valueFrom = "${data.aws_secretsmanager_secret.openai.arn}:health_media_openai_key::"},
-      {name = "ADMIN_PASSWORD",  valueFrom = "${data.aws_secretsmanager_secret.admin.arn}:health_media_admin_password::"},
-      {name = "SESSION_SECRET",  valueFrom = "${data.aws_secretsmanager_secret.session.arn}:health_media_session_secret::"},
+      {name = "OPENAI_KEY",      valueFrom = data.aws_secretsmanager_secret.openai.arn},
+      {name = "ADMIN_PASSWORD",  valueFrom = data.aws_secretsmanager_secret.admin.arn},
+      {name = "SESSION_SECRET",  valueFrom = data.aws_secretsmanager_secret.session.arn},
       {name = "DATABASE_URL",    valueFrom = aws_secretsmanager_secret.db_url.arn},
-      {name = "MEDIA_BUCKET",    valueFrom = aws_s3_bucket.media.bucket}
     ]
   }])
   runtime_platform {
@@ -366,7 +370,7 @@ resource "aws_ecs_service" "api" {
     container_port   = local.container_port
   }
 
-  lifecycle { ignore_changes = [task_definition] } # helps when updating image tags
+  lifecycle { ignore_changes = [task_definition] }
   depends_on = [aws_lb_listener.http]
 }
 
@@ -400,7 +404,6 @@ output "ecr_repository_url" { value = aws_ecr_repository.app.repository_url }
 output "db_endpoint"        { value = aws_db_instance.main.endpoint }
 
 # ---- S3 bucket (private, for CloudFront only) ----
-# Optional override (user-supplied); otherwise we generate one
 variable "fe_bucket_name" {
   type    = string
   default = null
@@ -412,7 +415,7 @@ locals {
   fe_bucket_name = coalesce(var.fe_bucket_name, "health-media-frontend-${random_id.suffix.hex}")
 }
 
-resource "aws_s3_bucket" "fe" { bucket = var.fe_bucket_name }
+resource "aws_s3_bucket" "fe" { bucket = local.fe_bucket_name }
 resource "aws_s3_bucket_ownership_controls" "fe" {
   bucket = aws_s3_bucket.fe.id
   rule { object_ownership = "BucketOwnerPreferred" }
@@ -429,7 +432,7 @@ resource "aws_s3_bucket_versioning" "fe" {
   versioning_configuration { status = "Enabled" }
 }
 
-# ---- CloudFront with OAC (no custom domain) ----
+# ---- CloudFront with OAC ----
 resource "aws_cloudfront_origin_access_control" "oac" {
   name                              = "health-media-fe-oac"
   description                       = "OAC for S3 origin"
@@ -457,18 +460,18 @@ resource "aws_cloudfront_distribution" "fe" {
     cached_methods         = ["GET","HEAD"]
     cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized managed policy
   }
-  
+
   origin {
     domain_name = aws_lb.app.dns_name
     origin_id   = "alb-backend"
     custom_origin_config {
-      origin_protocol_policy = "http-only" # ALB accepts HTTP from CF
+      origin_protocol_policy = "http-only"
       http_port              = 80
       https_port             = 443
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
-  
+
   ordered_cache_behavior {
     path_pattern           = "/api/*"
     target_origin_id       = "alb-backend"
@@ -479,7 +482,6 @@ resource "aws_cloudfront_distribution" "fe" {
     origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3" # AllViewer
   }
 
-  # SPA-friendly errors: serve index.html for 403/404
   custom_error_response {
     error_code = 403
     response_code = 200
@@ -492,7 +494,7 @@ resource "aws_cloudfront_distribution" "fe" {
   }
 
   default_root_object = "index.html"
-  price_class         = "PriceClass_100" # cheapest
+  price_class         = "PriceClass_100"
   restrictions {
     geo_restriction { restriction_type = "none" }
   }
@@ -527,7 +529,7 @@ output "frontend_bucket"       { value = aws_s3_bucket.fe.bucket }
 output "frontend_distribution" { value = aws_cloudfront_distribution.fe.id }
 output "frontend_domain"       { value = aws_cloudfront_distribution.fe.domain_name }
 
-# ---- S3 media bucket (private, for CloudFront only) ----
+# ---- S3 media bucket ----
 resource "aws_s3_bucket" "media" {
   bucket = "health-media-media-${random_id.suffix.hex}"
   tags   = { Name = "health-media-media-${random_id.suffix.hex}" }

@@ -21,6 +21,17 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProd = process.env.NODE_ENV === 'production';
 
+// Trust proxy — CloudFront uses HTTP to reach ALB so x-forwarded-proto is "http".
+// Detect CloudFront via the Via header and mark the connection as HTTPS so
+// express-session will set the Secure cookie.
+app.set('trust proxy', 1);
+app.use((req, _res, next) => {
+  if (req.headers['via'] && req.headers['via'].includes('cloudfront.net')) {
+    req.headers['x-forwarded-proto'] = 'https';
+  }
+  next();
+});
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
@@ -44,7 +55,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: isProd,
-    sameSite: 'lax',
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 8 * 60 * 60 * 1000, // 8 hours
   },
 }));
@@ -74,7 +85,21 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+async function start() {
+  const fs = require('fs');
+  const path = require('path');
+  try {
+    const schema = fs.readFileSync(path.join(__dirname, 'db', 'schema.sql'), 'utf8');
+    await pool.query(schema);
+    console.log('Schema applied');
+  } catch (err) {
+    console.error('Schema migration failed:', err.message);
+    process.exit(1);
+  }
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
+
+start();

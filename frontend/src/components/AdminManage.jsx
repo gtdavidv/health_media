@@ -53,6 +53,7 @@ const AdminManage = () => {
           <div className="header-actions">
             <Link to="/admin/add-article" className="nav-btn primary">Add New Article</Link>
             <Link to="/admin/pages" className="nav-btn">Pages</Link>
+            <Link to="/admin/settings" className="nav-btn">Settings</Link>
             <Link to="/admin/guardrails" className="nav-btn">AI Guardrails</Link>
             <Link to="/admin/studies" className="nav-btn">RAG Sources</Link>
             <Link to="/admin/stats" className="nav-btn">View Stats</Link>

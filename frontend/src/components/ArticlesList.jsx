@@ -10,7 +10,9 @@ const ArticlesList = () => {
   const [searchLoading, setSearchLoading] = useState(false)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
-  const [searchCount, setSearchCount] = useState(null) // null = not in search mode
+  const [searchCount, setSearchCount] = useState(null)
+  const [heading, setHeading] = useState('Health Media Articles')
+  const [subtitle, setSubtitle] = useState('Educational resources and information about health media')
 
   // Initial load
   useEffect(() => {
@@ -21,6 +23,12 @@ const ArticlesList = () => {
       })
       .catch(() => setError('Failed to fetch articles'))
       .finally(() => setInitialLoading(false))
+    axios.get('/api/settings')
+      .then(res => {
+        if (res.data.articles_heading) setHeading(res.data.articles_heading)
+        if (res.data.articles_subtitle) setSubtitle(res.data.articles_subtitle)
+      })
+      .catch(() => {})
   }, [])
 
   // Debounced search
@@ -80,10 +88,8 @@ const ArticlesList = () => {
   return (
     <div className="articles-list-container">
       <header className="articles-header">
-        <h1>Health Media Articles</h1>
-        <p className="articles-subtitle">
-          Educational resources and information about health media
-        </p>
+        <h1>{heading}</h1>
+        <p className="articles-subtitle">{subtitle}</p>
       </header>
 
       <div className="articles-search">
